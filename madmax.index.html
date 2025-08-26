@@ -1,0 +1,359 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2022.44">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+    span.s1 {font: 12.0px 'Apple Color Emoji'}
+    span.s2 {font: 12.0px 'Hiragino Sans'}
+  </style>
+</head>
+<body>
+<p class="p1">&lt;!DOCTYPE html&gt;</p>
+<p class="p1">&lt;html lang="ru"&gt;</p>
+<p class="p1">&lt;head&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta charset="UTF-8" /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta name="apple-mobile-web-app-capable" content="yes"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;title&gt;Счётчик тёток — бесконечный раннер (мужик с бородой)&lt;/title&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;style&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>:root{ --bg:#0e0e12; --panel:rgba(0,0,0,.35); --vh:1vh; --accent:#ffd84d; --border:#ffffff22; --border2:#00000066; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>html,body{height:100%;margin:0}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>body{background:var(--bg);color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;display:grid;place-items:center;overscroll-behavior:contain;-webkit-user-select:none;user-select:none}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.wrap{width:100vw;height:calc(var(--vh)*100);padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom) 12px;box-sizing:border-box;position:relative;display:flex;align-items:center;justify-content:center}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>canvas{display:block;border-radius:12px;box-shadow:0 6px 30px rgba(0,0,0,.35);image-rendering:crisp-edges;image-rendering:pixelated;touch-action:none;background:#0000}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.status{position:absolute;top:10px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;background:linear-gradient(180deg,rgba(18,18,22,.82),rgba(10,10,14,.78));</p>
+<p class="p1"><span class="Apple-converted-space">      </span>border:1px solid var(--border); box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 0 8px 24px rgba(0,0,0,.35), inset 0 -1px 0 var(--border2); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>font-size:clamp(12px,2.6vw,16px)}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.status .chip{display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:9px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07)}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.status .label{opacity:.8}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.status .sep{width:1px;height:22px;background:rgba(255,255,255,.12)}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.lives{display:flex;gap:6px}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.heart{font-size:18px;line-height:1;filter:drop-shadow(0 1px 0 rgba(0,0,0,.35))}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.heart.full{color:var(--accent)}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.heart.empty{color:#fff;opacity:.95}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);flex-direction:column;color:#fff;text-align:center;padding:22px}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.overlay.hidden{display:none}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.title{font-size:clamp(24px,4.5vw,34px);margin-bottom:12px;font-weight:800}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.subtitle{opacity:.95;margin-bottom:18px;font-size:clamp(12px,2.6vw,16px)}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.btn{cursor:pointer;border:0;padding:12px 18px;border-radius:12px;font-size:clamp(14px,2.8vw,17px);color:#fff;transition:transform .12s ease,filter .2s ease,box-shadow .2s ease;background:linear-gradient(135deg,#ff3b6b,#ff9f0a);box-shadow:0 8px 24px rgba(255,91,91,.35)}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.btn.alt{background:linear-gradient(135deg,#24c8ff,#7c4dff);box-shadow:0 8px 24px rgba(124,77,255,.35)}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/style&gt;</p>
+<p class="p1">&lt;/head&gt;</p>
+<p class="p1">&lt;body&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="wrap"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;canvas id="game" aria-label="Игра: счётчик тёток — бесконечный раннер"&gt;&lt;/canvas&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;!-- Плашка со статусом --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="status" id="status"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="chip"&gt;&lt;span class="label"&gt;Уровень&lt;/span&gt;&lt;strong id="uiLevel"&gt;1 / 3&lt;/strong&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="sep" aria-hidden="true"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="chip"&gt;&lt;span class="label"&gt;Тётки&lt;/span&gt;&lt;strong id="uiAunts"&gt;0 / 10&lt;/strong&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="sep" aria-hidden="true"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="chip"&gt;&lt;span class="label"&gt;Жизни&lt;/span&gt;&lt;span id="uiLives" class="lives" aria-label="Жизни"&gt;&lt;/span&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="ovStart" class="overlay"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="title"&gt;Счётчик тёток — забег&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="subtitle"&gt;Лови тёток, перепрыгивай врагов. У тебя 3 жизни на всю игру.&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;button id="btnStart" class="btn" type="button"&gt;Играть&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="subtitle" style="margin-top:10px;opacity:.85"&gt;Управление: тап / пробел — прыжок&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="ovLevel" class="overlay hidden"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div id="ovLevelTitle" class="title"&gt;Уровень 2&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div id="ovLevelSub" class="subtitle"&gt;Зимний пейзаж и немного быстрее!&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;button id="btnNextLevel" class="btn alt" type="button"&gt;Поехали&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="ovWin" class="overlay hidden"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="title"&gt;Победа! <span class="s1">🎉</span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="subtitle"&gt;Собрано 30 тёток. Сыграть ещё?&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;button id="btnReplay" class="btn" type="button"&gt;Сыграть снова&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="ovLose" class="overlay hidden"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="title"&gt;Поражение&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="subtitle"&gt;Жизни закончились. Попробуй ещё раз!&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;button id="btnRestart" class="btn alt" type="button"&gt;Начать заново&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>'use strict';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function setVh(){document.documentElement.style.setProperty('--vh', (window.innerHeight*0.01)+'px')} setVh(); window.addEventListener('resize', setVh, {passive:true});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// ===== Простые SVG-плейсхолдеры (можно заменить своими PNG) =====</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const HERO_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent(`</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;svg xmlns="http://www.w3.org/2000/svg" width="140" height="140" viewBox="0 0 140 140"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;rect width="140" height="140" rx="16" fill="#20262e"/&gt;&lt;g transform="translate(20,16)"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;circle cx="48" cy="32" r="22" fill="#f4c6a6"/&gt;&lt;!-- face --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;rect x="10" y="70" width="76" height="42" rx="10" fill="#2e9c7a"/&gt;&lt;!-- hoodie --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;path d="M26 44 q22 14 44 0" stroke="#4b2c20" stroke-width="8" fill="none" stroke-linecap="round"/&gt;&lt;!-- beard --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;rect x="30" y="28" width="16" height="10" rx="2" fill="#7ab3ff"/&gt;&lt;rect x="48" y="28" width="16" height="10" rx="2" fill="#7ab3ff"/&gt;&lt;!-- glasses --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/g&gt;&lt;/svg&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>`);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const AUNT_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent(`</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;rect width="120" height="120" rx="14" fill="#2a2139"/&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;circle cx="60" cy="42" r="18" fill="#f7d1b0"/&gt;&lt;path d="M20 92 q40-32 80 0" fill="#ff6fa0"/&gt;&lt;!-- dress --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;circle cx="72" cy="40" r="3" fill="#222"/&gt;&lt;circle cx="52" cy="40" r="3" fill="#222"/&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/svg&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>`);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// ===== Assets =====</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const ASSETS={</p>
+<p class="p1"><span class="Apple-converted-space">    </span>bg1:"https://i.postimg.cc/XvG7N6vf/Group-1597880560-1.png",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>bg2:"https://i.postimg.cc/yx1wjm9n/Group-1597880561.png",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>bg3:"https://i.postimg.cc/TwZ21HWF/Group-1597880562.png",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>hero:HERO_SVG, <span class="Apple-converted-space">                        </span>// новый герой: мужчина с бородой и очками</p>
+<p class="p1"><span class="Apple-converted-space">    </span>dragon:"https://i.postimg.cc/8zMQ5kSm/image.png",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>goose:"https://i.postimg.cc/qRB9j8C1/image.png",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>helmet:"https://i.postimg.cc/3wcpNdcf/Group-4.png",</p>
+<p class="p1"><span class="Apple-converted-space">    </span>aunt:AUNT_SVG<span class="Apple-converted-space">                          </span>// вместо тыквы — «тётка»</p>
+<p class="p1"><span class="Apple-converted-space">  </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>const SCALE_BASE={ hero:1.5, dragon:2.0, goose:1.9, aunt:1.35, helmet:2.0 };</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const LEVEL_GOALS={1:10,2:20,3:30};</p>
+<p class="p1"><span class="Apple-converted-space">  </span>let level=1, score=0;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// ===== Lives =====</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const MAX_LIVES=3; let lives=MAX_LIVES; let invuln=0, flashT=0;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function resetLives(){ lives=MAX_LIVES; updateLivesUI(); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function updateLivesUI(){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const box=document.getElementById('uiLives'); if(!box) return;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>let html='';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>for(let i=0;i&lt;MAX_LIVES;i++) html += `&lt;span class="heart ${i&lt;lives?'full':'empty'}" aria-hidden="true"&gt;<span class="s2">♥</span>&lt;/span&gt;`;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>box.innerHTML=html;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>box.setAttribute('aria-label',`Жизни: ${lives} из ${MAX_LIVES}`);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// ===== Canvas/DPI &amp; адаптив =====</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const canvas=document.getElementById('game');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const ctx=canvas.getContext('2d', {alpha:true, desynchronized:true});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>let W=0,H=0,groundY=0,S=1;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>const BG={1:{img:null,ok:false,tW:0,tH:0,x:0},2:{img:null,ok:false,tW:0,tH:0,x:0},3:{img:null,ok:false,tW:0,tH:0,x:0}};</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function curBG(){ return BG[level]||BG[1]; }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>let snow=[]; const SNOW_SIZE_MIN=3, SNOW_SIZE_MAX=5;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function snowCount(){ return Math.round((W*H)/8000); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function initSnow(){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>snow.length=0; const n=Math.min(220, snowCount());</p>
+<p class="p1"><span class="Apple-converted-space">    </span>for(let i=0;i&lt;n;i++){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>snow.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()*0.35-0.175),vy:0.25+Math.random()*0.35,s:SNOW_SIZE_MIN+Math.floor(Math.random()*(SNOW_SIZE_MAX-SNOW_SIZE_MIN+1)),t:Math.random()*1e3});</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function updateSnow(dt){ if(level!==2) return; for(const f of snow){ f.t+=dt; f.x+=f.vx*dt*60 + Math.sin(f.t*0.0015)*0.08; f.y+=f.vy*dt*60; if(f.y&gt;H){ f.y=-2; f.x=Math.random()*W; } if(f.x&lt;-4) f.x=W+4; if(f.x&gt;W+4) f.x=-4; } }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function drawSnow(){ if(level!==2) return; ctx.save(); ctx.imageSmoothingEnabled=false; ctx.fillStyle='#ffffffcc'; for(const f of snow){ ctx.fillRect(f.x|0, f.y|0, f.s, f.s); } ctx.restore(); }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>function fitCanvas(reset=false){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const ratio=16/9; const maxW=Math.min(window.innerWidth,1200); const maxH=Math.min(window.innerHeight,720);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>let cssW=maxW, cssH=Math.round(maxW/ratio); if(cssH&gt;maxH){ cssH=maxH; cssW=Math.round(maxH*ratio); }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const dpr=Math.min(window.devicePixelRatio||1,2);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>canvas.style.width=cssW+'px'; canvas.style.height=cssH+'px';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>canvas.width=Math.round(cssW*dpr); canvas.height=Math.round(cssH*dpr);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>ctx.setTransform(dpr,0,0,dpr,0,0);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>W=cssW; H=cssH; S=Math.max(0.5, Math.min(1, H/540));</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>for(const k of [1,2,3]){ const b=BG[k]; if(b.ok&amp;&amp;b.img&amp;&amp;b.img.naturalHeight){ const s=H/b.img.naturalHeight; b.tW=Math.ceil(b.img.naturalWidth*s); b.tH=H; } }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>groundY = H - Math.round(90*S);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>sizeHero(); hero.y = groundY - hero.h*hero.scale;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(level===2) initSnow();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(reset){ obstacles.length=0; aunts.length=0; obstTimer=0; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// ===== Физика =====</p>
+<p class="p1"><span class="Apple-converted-space">  </span>let baseSpeed=7.8, gameSpeed=7.8, gravity=0.75, jumpV=-24;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function recalcPhysics(){ gravity = 0.75*S; jumpV = -24*S; }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// ===== Игрок/спрайты =====</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const hero={x:150, y:0, vy:0, w:90, h:90, onGround:true, coyote:0, angle:0, swayT:0, img:null, ok:false, scale:1};</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const SPR={ dragon:{img:null,ok:false,bS:SCALE_BASE.dragon}, goose:{img:null,ok:false,bS:SCALE_BASE.goose}, helmet:{img:null,ok:false,bS:SCALE_BASE.helmet}, aunt:{img:null,ok:false,bS:SCALE_BASE.aunt} };</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const obstacles=[], aunts=[]; let obstTimer=0,nextSpawn=120;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>function sizeHero(){ if(hero.ok){ const t=Math.round(110*S*SCALE_BASE.hero); const k=t/hero.img.naturalHeight; hero.h=t; hero.w=Math.round(hero.img.naturalWidth*k); } }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function setHeroStartPos(){ hero.scale=1; hero.x=Math.round(90*S)+60; hero.y=groundY-hero.h*hero.scale; hero.onGround=true; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function create(ref,m=1){ const ok=ref.ok&amp;&amp;ref.img; let w=120,h=90; if(ok){ const t=Math.round(110*S*ref.bS*m); const k=t/ref.img.naturalHeight; w=Math.round(ref.img.naturalWidth*k); h=t; } return {img:ref.img, ok, w, h, x:W+40, y:groundY-h+6, vx:0, swayT:0, type:'?'}; }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// ===== Загрузка ассетов =====</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function load(u){return new Promise(r=&gt;{const i=new Image(); i.crossOrigin='anonymous'; const t=setTimeout(()=&gt;r({ok:false,img:null}),8000); i.onload=()=&gt;{clearTimeout(t);r({ok:true,img:i})}; i.onerror=()=&gt;{clearTimeout(t);r({ok:false,img:null})}; i.src=u;});}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>(async function init(){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const [b1,b2,b3,heroImg,d,g,h,a]=await Promise.all([</p>
+<p class="p1"><span class="Apple-converted-space">      </span>load(ASSETS.bg1), load(ASSETS.bg2), load(ASSETS.bg3), load(ASSETS.hero), load(ASSETS.dragon), load(ASSETS.goose), load(ASSETS.helmet), load(ASSETS.aunt)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>]);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>BG[1].img=b1.img; BG[1].ok=b1.ok; BG[2].img=b2.img; BG[2].ok=b2.ok; BG[3].img=b3.img; BG[3].ok=b3.ok;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>hero.img=heroImg.img; hero.ok=heroImg.ok;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>SPR.dragon.img=d.img; SPR.dragon.ok=d.ok;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>SPR.goose.img=g.img; SPR.goose.ok=g.ok;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>SPR.helmet.img=h.img; SPR.helmet.ok=h.ok;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>SPR.aunt.img=a.img; SPR.aunt.ok=!!a.img;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>fitCanvas(true); recalcPhysics(); setHeroStartPos(); resetLives();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>schedule();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>loop();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>})();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// ===== Аудио (как в исходнике) =====</p>
+<p class="p1"><span class="Apple-converted-space">  </span>let audioCtx=null;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>let master={gain:null, muted:false};</p>
+<p class="p1"><span class="Apple-converted-space">  </span>let sfx={gain:null};</p>
+<p class="p1"><span class="Apple-converted-space">  </span>let music={gain:null, timer:null, active:false, currentLevel:0, step:0, phrase:[]};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>function ensureAudio(){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(!audioCtx){ const AC=window.AudioContext||window.webkitAudioContext; audioCtx=new AC(); }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(!master.gain){ master.gain=audioCtx.createGain(); master.gain.gain.value=0.85; master.gain.connect(audioCtx.destination); }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(!sfx.gain){ sfx.gain=audioCtx.createGain(); sfx.gain.gain.value=0.58; sfx.gain.connect(master.gain); }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(audioCtx.state==='suspended') audioCtx.resume();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function lvlPreset(l){ if(l===1) return {root:293.66, scale:[0,2,4,5,7,9,11,12], tempo:110, vol:0.13}; if(l===2) return {root:329.63, scale:[0,2,3,5,7,9,10,12], tempo:118, vol:0.14}; return {root:220.00, scale:[0,2,3,5,7,8,10,12], tempo:120, vol:0.15}; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function degFreq(p, deg, oct=0){ const semi=p.scale[deg%p.scale.length]+12*Math.floor(deg/p.scale.length)+12*oct; return p.root*Math.pow(2,semi/12); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function buildPhrase(p){ const seeds=[[0,2,4,5,4,2,0,0],[4,5,7,9,7,5,4,2],[0,0,2,3,5,3,2,0],[5,4,2,0,2,4,5,7]]; const base=seeds[(Math.random()*seeds.length)|0]; const withOct=base.map((d,i)=&gt;({deg:d+(i===7&amp;&amp;Math.random()&lt;0.3?12:0),rest:false})); for(let i=1;i&lt;withOct.length-1;i+=2){ if(Math.random()&lt;0.15) withOct[i].rest=true; } return withOct; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function startLevelMusic(l){ try{ ensureAudio(); if(!music.gain){ music.gain=audioCtx.createGain(); music.gain.gain.value=0.0001; music.gain.connect(master.gain); } stopMusic(); const p=lvlPreset(l); music.active=true; music.currentLevel=l; music.step=0; music.phrase=buildPhrase(p); const t=audioCtx.currentTime; music.gain.gain.setValueAtTime(0.0001,t); music.gain.gain.exponentialRampToValueAtTime(master.muted?0.0001:p.vol, t+0.4); const beat=60/p.tempo/2; music.timer=setInterval(()=&gt;{ if(!music.active) return; const ev=music.phrase[music.step % music.phrase.length]; if(ev &amp;&amp; !ev.rest){ const f=degFreq(p, ev.deg, 0); playLeadNote(f, beat*0.95); } music.step++; if(music.step%music.phrase.length===0){ music.phrase=buildPhrase(p); } }, beat*1000);}catch(e){} }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function stopMusic(){ try{ if(!audioCtx||!music.gain) return; music.active=false; if(music.timer){ clearInterval(music.timer); music.timer=null; } const t=audioCtx.currentTime; music.gain.gain.cancelScheduledValues(t); music.gain.gain.setValueAtTime(Math.max(0.0001,music.gain.gain.value), t); music.gain.gain.exponentialRampToValueAtTime(0.0001, t+0.3);}catch(e){} }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function playLeadNote(freq, dur){ try{ const t=audioCtx.currentTime; const o1=audioCtx.createOscillator(); const o2=audioCtx.createOscillator(); const g1=audioCtx.createGain(); const g2=audioCtx.createGain(); const out=audioCtx.createGain(); const lp=audioCtx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=1200; lp.Q.value=0.2; const del=audioCtx.createDelay(0.5); del.delayTime.value=0.17; const fb=audioCtx.createGain(); fb.gain.value=0.18; o1.type='square'; o2.type='triangle'; o1.frequency.value=freq; o2.frequency.value=freq*2; g1.gain.setValueAtTime(0.0001,t); g1.gain.exponentialRampToValueAtTime(0.10,t+0.02); g1.gain.exponentialRampToValueAtTime(0.0001, t+dur); g2.gain.value=0.05; out.gain.value=1.0; o1.connect(g1); g1.connect(out); o2.connect(g2); g2.connect(out); const wet=audioCtx.createGain(); wet.gain.value=0.22; out.connect(lp).connect(music.gain); out.connect(del).connect(fb).connect(del); del.connect(wet).connect(music.gain); o1.start(t); o2.start(t); o1.stop(t+dur+0.02); o2.stop(t+dur+0.02);}catch(e){} }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function playJump(){ try{ ensureAudio(); const t=audioCtx.currentTime; const o=audioCtx.createOscillator(); const g=audioCtx.createGain(); o.type='square'; const base=480 + Math.random()*30; o.frequency.setValueAtTime(base,t); o.frequency.exponentialRampToValueAtTime(base+320,t+0.08); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.055,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+0.18); o.connect(g).connect(sfx.gain); o.start(t); o.stop(t+0.2);}catch(e){} }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function playCoin(){ try{ ensureAudio(); const t=audioCtx.currentTime; const o=audioCtx.createOscillator(); const g=audioCtx.createGain(); o.type='sine'; const start=980+Math.random()*60; const end=start+620+Math.random()*160; o.frequency.setValueAtTime(start,t); o.frequency.exponentialRampToValueAtTime(end,t+0.06); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.07,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+0.20); o.connect(g).connect(sfx.gain); o.start(t); o.stop(t+0.22);}catch(e){} }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function playFanfare(){ try{ ensureAudio(); const t=audioCtx.currentTime; const seq=[523.25,659.25,783.99,1046.50]; let d=0; for(const f of seq){ const o=audioCtx.createOscillator(); const g=audioCtx.createGain(); o.type='square'; o.frequency.value=f; g.gain.value=0.0001; g.gain.exponentialRampToValueAtTime(0.12,t+d+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+d+0.26); o.connect(g).connect(sfx.gain); o.start(t+d); o.stop(t+d+0.28); d+=0.20; } }catch(e){} }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function playHit(){ try{ ensureAudio(); const t=audioCtx.currentTime; const o=audioCtx.createOscillator(); const g=audioCtx.createGain(); o.type='triangle'; o.frequency.setValueAtTime(220,t); o.frequency.exponentialRampToValueAtTime(140,t+0.1); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.09,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+0.22); o.connect(g).connect(sfx.gain); o.start(t); o.stop(t+0.24);}catch(e){} }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// ===== UI =====</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const $=id=&gt;document.getElementById(id);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('btnStart').addEventListener('click', startGame, {passive:true});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('ovStart').addEventListener('click',(e)=&gt;{ if(e.target.id==='ovStart') startGame(); });</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('btnNextLevel').addEventListener('click', proceedNextLevel, {passive:true});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('btnReplay').addEventListener('click', ()=&gt;restart(true), {passive:true});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('btnRestart').addEventListener('click', ()=&gt;restart(false), {passive:true});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>const onTap=(e)=&gt;{ e.preventDefault(); if(!started&amp;&amp;!gameOver) startGame(); else onJump(); };</p>
+<p class="p1"><span class="Apple-converted-space">  </span>canvas.addEventListener('pointerdown', onTap, {passive:false});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>canvas.addEventListener('touchstart', onTap, {passive:false});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>window.addEventListener('keydown',e=&gt;{ if(e.code==='Space'){ e.preventDefault(); onJump(); } if(e.code==='Enter'&amp;&amp;!started&amp;&amp;!gameOver){ startGame(); } },{passive:false});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>function startGame(){ started=true; gameOver=false; $('ovStart').classList.add('hidden'); ensureAudio(); startLevelMusic(level); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function showLevelOverlay(next){ $('ovLevelTitle').textContent=`Уровень ${next}`; $('ovLevelSub').textContent= next===2?'Зимний пейзаж и немного быстрее!':'Ещё быстрее — удачи!'; $('ovLevel').classList.remove('hidden'); }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// ===== Анти-повторы врагов =====</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const OBST_TYPES=[ {id:'dragon', weight:0.45}, {id:'goose', weight:0.35}, {id:'helmet', weight:0.20} ];</p>
+<p class="p1"><span class="Apple-converted-space">  </span>let lastType=null, repeatCount=0;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function pickWeighted(list){ const total=list.reduce((a,b)=&gt;a+b.weight,0); let r=Math.random()*total; for(const it of list){ r-=it.weight; if(r&lt;=0) return it.id; } return list[list.length-1].id; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function chooseType(){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>let t=pickWeighted(OBST_TYPES);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(t===lastType){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>repeatCount++;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if(repeatCount&gt;=2){ const others=OBST_TYPES.filter(o=&gt;o.id!==lastType); t=others[(Math.random()*others.length)|0].id; }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>else if(Math.random()&lt;0.6){ const others=OBST_TYPES.filter(o=&gt;o.id!==lastType); t=others[(Math.random()*others.length)|0].id; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>} else { repeatCount=0; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>lastType=t; return t;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>let pendingNextLevel=null; function proceedNextLevel(){ if(!pendingNextLevel) return; level=Math.min(pendingNextLevel, 3); pendingNextLevel=null; score=0; const b=curBG(); b.x=0; gameSpeed=Math.min(13, gameSpeed+1.1); obstacles.length=0; aunts.length=0; obstTimer=0; setHeroStartPos(); schedule(); updateHUD(); $('ovLevel').classList.add('hidden'); started=true; if(level===2) initSnow(); startLevelMusic(level); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function restart(){ $('ovLose').classList.add('hidden'); $('ovWin').classList.add('hidden'); $('ovLevel').classList.add('hidden'); level=1; score=0; pendingNextLevel=null; gameSpeed=baseSpeed; started=false; gameOver=false; celebrating=false; ticks=0; distance=0; obstacles.length=0; aunts.length=0; obstTimer=0; fitCanvas(true); recalcPhysics(); setHeroStartPos(); resetLives(); updateHUD(); $('ovStart').classList.remove('hidden'); stopMusic(); }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>function currentGoal(){return LEVEL_GOALS[level]}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// ===== Спавн/баланс =====</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function schedule(){ const b=110+Math.random()*70; nextSpawn=Math.max(85, Math.floor(b-(gameSpeed-6)*5)); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function spawnEvent(){ const r=Math.random(); if(r&lt;0.35) spawnAunts(); else spawnObstacle(); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function minGap(){ const l=obstacles[obstacles.length-1]; return !l || l.x &lt; W - ((360 + (12-gameSpeed)*20) * S); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function spawnObstacle(){ if(!minGap()) return; const type=chooseType(); let s=create(SPR[type],1.0); s.type=type; const speedBoost = type==='dragon'?1.8 : (type==='goose'?0.25 : 1.0); s.vx=-(gameSpeed+speedBoost)*S; s.swayT=Math.random()*1e3; obstacles.push(s); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function spawnAunts(){ const cnt=1+Math.floor(Math.random()*2), sp=Math.round(60*S*SCALE_BASE.aunt); const air=Math.random()&lt;0.5, by=air?H-Math.round(240*S):groundY-Math.round(70*S); for(let i=0;i&lt;cnt;i++){ let s=create(SPR.aunt,1.0); s.type='aunt'; s.x=W+40+i*sp; s.y=by+(air?Math.sin(i*0.6)*18:0); s.vx=-(gameSpeed+0.4)*S; s.swayT=Math.random()*1e3; aunts.push(s);} }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// ===== Игровой цикл =====</p>
+<p class="p1"><span class="Apple-converted-space">  </span>let started=false, gameOver=false, celebrating=false, ticks=0, distance=0;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>let celeb=null;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function safeCelebrationScale(desired){ const margin=10; const maxX=(W-margin)/hero.w; const maxY=(H-margin)/hero.h; const maxScale=Math.min(maxX, maxY); return Math.min(desired, Math.max(1, maxScale*0.95)); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function beginCelebration(jumps, desiredScale, onDone){ const bigScale=safeCelebrationScale(desiredScale); celebrating=true; celeb={jumps, bigScale, done:false, count:0, onDone, cooldown:0}; obstacles.length=0; aunts.length=0; }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>function onJump(){ if(!started||gameOver||celebrating) return; if(hero.onGround||hero.coyote&gt;0){ hero.vy=jumpV; hero.onGround=false; hero.coyote=0; playJump(); } }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>let last=performance.now();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function loop(){ requestAnimationFrame(loop); const now=performance.now(); const dt=Math.min(40, now-last); last=now; update(dt/16.67); render(); }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>function update(t){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(celebrating){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const margin=10;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const targetX = Math.max(margin, Math.min(W - hero.w*celeb.bigScale - margin, (W - hero.w*celeb.bigScale)/2));</p>
+<p class="p1"><span class="Apple-converted-space">      </span>hero.x += (targetX-hero.x)*Math.min(1,0.10*t*6);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>hero.scale += ((celeb.bigScale-hero.scale)*0.08)*t;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>hero.vy += (0.75*S)*t; hero.y+=hero.vy*t;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const maxY=groundY-hero.h*hero.scale; if(hero.y&gt;=maxY){ hero.y=maxY; hero.vy=0; hero.onGround=true; }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>celeb.cooldown-=t;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if(hero.onGround &amp;&amp; celeb.cooldown&lt;=0 &amp;&amp; celeb.count&lt;celeb.jumps){ hero.vy=jumpV*0.9; playJump(); hero.onGround=false; celeb.count++; celeb.cooldown=14; }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if(celeb.count&gt;=celeb.jumps &amp;&amp; hero.onGround){ celebrating=false; if(celeb.onDone) celeb.onDone(); }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>return;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(!started||gameOver) return;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>ticks+=t; if(invuln&gt;0) invuln=Math.max(0,invuln-t); if(flashT&gt;0) flashT=Math.max(0,flashT-t);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>const goal=currentGoal();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(score&gt;=goal){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>started=false;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if(level&lt;3){ beginCelebration(3, 1.5, ()=&gt;{ pendingNextLevel=level+1; showLevelOverlay(pendingNextLevel); }); }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>else { beginCelebration(5, 1.8, ()=&gt;{ document.getElementById('ovWin').classList.remove('hidden'); stopMusic(); playFanfare(); }); }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>return;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>const bgSpeed = (3.2 + (gameSpeed-6)*0.6) * S; const b=curBG(); distance += (gameSpeed*0.1*t) * S; b.x -= bgSpeed * t; if(b.x&lt;=-b.tW) b.x += b.tW;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>obstTimer+=t; if(obstTimer&gt;nextSpawn){ obstTimer=0; schedule(); spawnEvent(); }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>const sway=0.12*t; for(let i=obstacles.length-1;i&gt;=0;i--){ const o=obstacles[i]; o.x+=o.vx*t; o.swayT+=sway; if(o.x+o.w&lt;-40) obstacles.splice(i,1);} for(let i=aunts.length-1;i&gt;=0;i--){ const c=aunts[i]; c.x+=c.vx*t; c.swayT+=sway; if(c.x+c.w&lt;-40) aunts.splice(i,1);} <span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">    </span>hero.vy+= (0.75*S)*t; hero.y+=hero.vy*t; if(hero.y&gt;=groundY-hero.h*hero.scale){ hero.y=groundY-hero.h*hero.scale; hero.vy=0; if(!hero.onGround) hero.onGround=true; } else if(hero.coyote&gt;0){ hero.coyote-=t; } if(hero.onGround) hero.coyote=8; hero.swayT+=0.18*t; hero.angle=Math.sin(hero.swayT*2.2)*0.06;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>const hb={ x:hero.x+Math.round(12*S), y:hero.y+Math.round(10*S), w:hero.w*hero.scale-Math.round(24*S), h:hero.h*hero.scale-Math.round(20*S) };</p>
+<p class="p1"><span class="Apple-converted-space">    </span>for(let i=aunts.length-1;i&gt;=0;i--){ const c=aunts[i]; if(inter(hb,{x:c.x,y:c.y,w:c.w,h:c.h})){ aunts.splice(i,1); score++; updateHUD(); playCoin(); } }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>for(let i=0;i&lt;obstacles.length;i++){ const o=obstacles[i]; if(invuln&lt;=0 &amp;&amp; inter(hb, hitbox(o))){ takeHit(); obstacles.splice(i,1); break; } }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(level===2) updateSnow(t);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>function takeHit(){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>lives--; updateLivesUI(); playHit(); flashT=10; invuln=35;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(lives&lt;=0){ gameOver=true; document.getElementById('ovLose').classList.remove('hidden'); stopMusic(); return; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>hero.vy = jumpV*0.6; hero.onGround=false; obstacles.length=0;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>function hitbox(o){ if(o.type==='goose'){ const sx=o.w*0.33, top=o.h*0.48, h=o.h*0.48; return { x:o.x+sx, y:o.y+top, w:o.w-sx*2, h:h }; } return { x:o.x+12, y:o.y+Math.round(o.h*0.28), w:o.w-24, h:Math.round(o.h*0.72) }; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function inter(a,b){ return !(a.x+a.w&lt;b.x || a.x&gt;b.x+b.w || a.y+a.h&lt;b.y || a.y&gt;b.y+b.h); }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// ===== Рендер =====</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function render(){ if(!W||!H){ fitCanvas(); recalcPhysics(); return; } ctx.clearRect(0,0,W,H);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const b=curBG();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(b.ok){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.imageSmoothingEnabled=false;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const tileW=b.tW, drawW=tileW+2;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const startX=Math.floor(b.x % tileW) - tileW;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>for(let i=0;i&lt;4;i++) ctx.drawImage(b.img, startX + i*tileW, 0, drawW, b.tH);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>} else {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#0a0c16'); g.addColorStop(1,'#111525'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>drawSnow();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>for(const e of aunts){ const sx=Math.sin(e.swayT)*2.1, sy=Math.cos(e.swayT*1.1)*1.6, ang=Math.sin(e.swayT*1.05)*0.04; ctx.save(); ctx.translate(e.x+e.w/2+sx, e.y+e.h/2+sy); ctx.rotate(ang); drawEntity(e,-e.w/2,-e.h/2); ctx.restore(); }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>for(const e of obstacles){ const sx=Math.sin(e.swayT)*2.1, sy=Math.cos(e.swayT*1.1)*1.6, ang=Math.sin(e.swayT*1.05)*0.04; ctx.save(); ctx.translate(e.x+e.w/2+sx, e.y+e.h/2+sy); if(e.type==='goose') ctx.scale(-1,1); ctx.rotate(ang); drawEntity(e,-e.w/2,-e.h/2); ctx.restore(); }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>const hSx=Math.sin(hero.swayT)*6; ctx.save(); ctx.translate(hero.x+hero.w/2+hSx, hero.y+hero.h*hero.scale/2); ctx.scale(-hero.scale, hero.scale); ctx.rotate(hero.angle);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(invuln&gt;0 &amp;&amp; Math.floor(performance.now()/120)%2===0){ ctx.globalAlpha=0.5; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>drawEntity(hero,-hero.w/2,-hero.h/2); ctx.restore(); ctx.globalAlpha=1;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>function drawEntity(e,ox=0,oy=0){ if(e.ok&amp;&amp;e.img){ ctx.imageSmoothingEnabled=false; ctx.drawImage(e.img,0,0,e.img.naturalWidth,e.img.naturalHeight,ox,oy,e.w,e.h);} else { ctx.fillStyle='rgba(255,255,255,.12)'; ctx.fillRect(ox,oy,e.w,e.h);} }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function updateHUD(){ const goal=LEVEL_GOALS[level]; document.getElementById('uiAunts').textContent=`${score} / ${goal}`; document.getElementById('uiLevel').textContent=`${level} / 3`; }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>window.addEventListener('resize', ()=&gt;{ fitCanvas(true); recalcPhysics(); setHeroStartPos(); }, {passive:true});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>window.addEventListener('orientationchange', ()=&gt;setTimeout(()=&gt;{ fitCanvas(true); recalcPhysics(); setHeroStartPos(); }, 300), {passive:true});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>document.addEventListener('visibilitychange', ()=&gt;{ if(document.hidden){ stopMusic(); } else if(started &amp;&amp; !gameOver){ startLevelMusic(level); } });</p>
+<p class="p1"><span class="Apple-converted-space">  </span>fitCanvas(true); recalcPhysics();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>updateHUD(); updateLivesUI();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/script&gt;</p>
+<p class="p1">&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
+</body>
+</html>
