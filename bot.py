@@ -231,9 +231,20 @@ def get_joke_keyboard(joke_index: int) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(keyboard)
 
 
-def send_random_joke() -> tuple[str, int]:
-    """Выбираем случайную шутку и возвращаем текст + индекс."""
-    idx = random.randint(0, len(JOKES) - 1)
+def get_unseen_joke(chat_id: str) -> tuple[str, int] | None:
+    """Выбираем случайную шутку, которую пользователь ещё не видел."""
+    sub = data["subscribers"].get(chat_id, {})
+    seen = set(sub.get("seen", []))
+    all_indices = set(range(len(JOKES)))
+    unseen = list(all_indices - seen)
+    if not unseen:
+        return None  # все шутки просмотрены
+    idx = random.choice(unseen)
+    # Запоминаем, что эту шутку показали
+    if "seen" not in data["subscribers"].get(chat_id, {}):
+        data["subscribers"][chat_id]["seen"] = []
+    data["subscribers"][chat_id]["seen"].append(idx)
+    save_data()
     return JOKES[idx], idx
 
 
@@ -249,6 +260,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Команды:\n"
         "/joke — получить шутку прямо сейчас\n"
         "/time — выбрать время рассылки\n"
+        "/reset — сбросить просмотренные шутки\n"
         "/stop — отписаться\n"
     )
     logger.info(f"Новый подписчик: {chat_id}. Всего: {len(data['subscribers'])}")
@@ -264,8 +276,30 @@ async def cmd_stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.info(f"Отписка: {chat_id}. Всего: {len(data['subscribers'])}")
 
 
+async def cmd_reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = str(update.effective_chat.id)
+    if chat_id in data["subscribers"]:
+        data["subscribers"][chat_id]["seen"] = []
+        save_data()
+    await update.message.reply_text(
+        f"🔄 Готово! Все {len(JOKES)} шуток снова доступны. Отправь /joke!"
+    )
+
+
 async def cmd_joke(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    joke, idx = send_random_joke()
+    chat_id = str(update.effective_chat.id)
+    # Если пользователь не подписан, всё равно даём шутку
+    if chat_id not in data["subscribers"]:
+        data["subscribers"][chat_id] = {"time": "08:00", "seen": []}
+        save_data()
+    result = get_unseen_joke(chat_id)
+    if result is None:
+        await update.message.reply_text(
+            "🎉 Ты посмотрел(а) все шутки! Их было аж {0}.\n\n"
+            "Жди пополнения коллекции — или напиши /reset чтобы начать сначала.".format(len(JOKES))
+        )
+        return
+    joke, idx = result
     await update.message.reply_text(
         f"😄 Шутка за 300:\n\n{joke}",
         reply_markup=get_joke_keyboard(idx),
@@ -360,12 +394,12 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # --- Ежедневная рассылка ---
 async def send_daily_joke(app: Application, target_time: str):
     """Рассылка шутки подписчикам с выбранным временем."""
-    joke, idx = send_random_joke()
-    text = f"☀️ Доброе утро! Вот шутка за 300 на сегодня:\n\n{joke}"
-    if target_time == "13:00":
-        text = f"🌞 Дневная шутка за 300:\n\n{joke}"
-    elif target_time == "20:00":
-        text = f"🌙 Вечерняя шутка за 300:\n\n{joke}"
+    greetings = {
+        "08:00": "☀️ Доброе утро! Вот шутка за 300 на сегодня:\n\n",
+        "13:00": "🌞 Дневная шутка за 300:\n\n",
+        "20:00": "🌙 Вечерняя шутка за 300:\n\n",
+    }
+    greeting = greetings.get(target_time, "😄 Шутка за 300:\n\n")
 
     recipients = [
         cid for cid, prefs in data["subscribers"].items()
@@ -374,9 +408,17 @@ async def send_daily_joke(app: Application, target_time: str):
     failed = []
     for chat_id in recipients:
         try:
+            result = get_unseen_joke(chat_id)
+            if result is None:
+                await app.bot.send_message(
+                    chat_id=int(chat_id),
+                    text="🎉 Ты посмотрел(а) все шутки! Жди пополнения коллекции — или отправь /reset чтобы начать сначала.",
+                )
+                continue
+            joke, idx = result
             await app.bot.send_message(
                 chat_id=int(chat_id),
-                text=text,
+                text=f"{greeting}{joke}",
                 reply_markup=get_joke_keyboard(idx),
             )
         except Exception as e:
@@ -399,6 +441,7 @@ def main():
     # Команды
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("stop", cmd_stop))
+    app.add_handler(CommandHandler("reset", cmd_reset))
     app.add_handler(CommandHandler("joke", cmd_joke))
     app.add_handler(CommandHandler("time", cmd_time))
     app.add_handler(CommandHandler("stats", cmd_stats))
