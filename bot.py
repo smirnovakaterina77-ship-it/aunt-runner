@@ -20,6 +20,9 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN")
 if not BOT_TOKEN:
     raise RuntimeError("Переменная BOT_TOKEN не задана!")
 
+# --- ID администратора (только он видит /stats) ---
+ADMIN_ID = int(os.environ.get("ADMIN_ID", "0"))
+
 # --- Файл подписчиков ---
 SUBSCRIBERS_FILE = Path("subscribers.json")
 
@@ -205,6 +208,17 @@ async def cmd_joke(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"😄 Шутка за 300:\n\n{joke}")
 
 
+async def cmd_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+    if ADMIN_ID and chat_id != ADMIN_ID:
+        return  # молча игнорируем, если не админ
+    await update.message.reply_text(
+        f"📊 Статистика бота:\n\n"
+        f"Подписчиков: {len(subscribers)}\n"
+        f"Шуток в коллекции: {len(JOKES)}"
+    )
+
+
 # --- Ежедневная рассылка ---
 async def send_daily_joke(app: Application):
     joke = random.choice(JOKES)
@@ -232,6 +246,7 @@ def main():
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("stop", cmd_stop))
     app.add_handler(CommandHandler("joke", cmd_joke))
+    app.add_handler(CommandHandler("stats", cmd_stats))
 
     # Планировщик: каждый день в 8:00 по Амстердаму (Europe/Amsterdam)
     scheduler = AsyncIOScheduler(timezone="Europe/Amsterdam")
