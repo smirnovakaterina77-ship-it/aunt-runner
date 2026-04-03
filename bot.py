@@ -3,8 +3,13 @@ import json
 import random
 import logging
 from pathlib import Path
-from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    CallbackQueryHandler,
+    ContextTypes,
+)
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
@@ -23,23 +28,56 @@ if not BOT_TOKEN:
 # --- ID администратора (только он видит /stats) ---
 ADMIN_ID = int(os.environ.get("ADMIN_ID", "0"))
 
-# --- Файл подписчиков ---
-SUBSCRIBERS_FILE = Path("subscribers.json")
+# --- Файлы данных ---
+DATA_FILE = Path("data.json")
 
 
-def load_subscribers() -> set:
-    if SUBSCRIBERS_FILE.exists():
-        with open(SUBSCRIBERS_FILE, "r") as f:
-            return set(json.load(f))
-    return set()
+def load_data() -> dict:
+    """Загружаем все данные: подписчиков, рейтинги, настройки."""
+    if DATA_FILE.exists():
+        with open(DATA_FILE, "r") as f:
+            return json.load(f)
+    return {"subscribers": {}, "ratings": {}}
 
 
-def save_subscribers(subs: set):
-    with open(SUBSCRIBERS_FILE, "w") as f:
-        json.dump(list(subs), f)
+def save_data():
+    with open(DATA_FILE, "w") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
 
-subscribers = load_subscribers()
+data = load_data()
+
+# subscribers: {"chat_id": {"time": "08:00"}}  — строковые ключи (JSON)
+# ratings:     {"joke_index": {"up": 5, "down": 1}}
+
+if "subscribers" not in data:
+    data["subscribers"] = {}
+if "ratings" not in data:
+    data["ratings"] = {}
+
+# Миграция: если был старый subscribers.json (набор chat_id)
+OLD_SUBS = Path("subscribers.json")
+if OLD_SUBS.exists():
+    try:
+        with open(OLD_SUBS, "r") as f:
+            old_ids = json.load(f)
+        for cid in old_ids:
+            key = str(cid)
+            if key not in data["subscribers"]:
+                data["subscribers"][key] = {"time": "08:00"}
+        save_data()
+        OLD_SUBS.unlink()
+        logger.info(f"Мигрировано {len(old_ids)} подписчиков из старого формата")
+    except Exception as e:
+        logger.warning(f"Не удалось мигрировать старых подписчиков: {e}")
+
+
+# --- Доступные слоты времени ---
+TIME_SLOTS = {
+    "08:00": "Утро (8:00)",
+    "13:00": "День (13:00)",
+    "20:00": "Вечер (20:00)",
+}
 
 # --- Шутки за 300 ---
 JOKES = [
@@ -96,7 +134,7 @@ JOKES = [
     "— Мам, что такое «тёмная материя»?\n— Загляни в холодильник на верхнюю полку. Видишь контейнер? Вот не открывай его.",
     "Кто рано встаёт, тому до обеда есть хочется дважды.",
     "— Как называется группа из восьми осьминогов?\n— Оркестр.",
-    "Сосед сверху уронил что-то тяжёлое в 3 часа ночи. К счастью, я ещё не спал — играл на тубе.",
+    "Сосед сверху уронил что-то тяжёлое в 3 ночи. К счастью, я ещё не спал — играл на тубе.",
     "— Пап, купи мне барабан!\n— Мне и без барабана голова болит.\n— Так я буду играть, когда у тебя не болит!",
     "Говорят, за деньги счастье не купишь. Зато можно арендовать.",
     "Мой будильник ненавидит меня. Каждый день он орёт, а я его бью. Токсичные отношения.",
@@ -178,64 +216,180 @@ JOKES = [
 ]
 
 
+# --- Отправка шутки с кнопками рейтинга ---
+def get_joke_keyboard(joke_index: int) -> InlineKeyboardMarkup:
+    """Создаём кнопки 😂 и 😐 под шуткой."""
+    stats = data["ratings"].get(str(joke_index), {"up": 0, "down": 0})
+    up_count = stats["up"]
+    down_count = stats["down"]
+    keyboard = [
+        [
+            InlineKeyboardButton(f"😂 {up_count}", callback_data=f"rate_up_{joke_index}"),
+            InlineKeyboardButton(f"😐 {down_count}", callback_data=f"rate_down_{joke_index}"),
+        ]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
+def send_random_joke() -> tuple[str, int]:
+    """Выбираем случайную шутку и возвращаем текст + индекс."""
+    idx = random.randint(0, len(JOKES) - 1)
+    return JOKES[idx], idx
+
+
 # --- Команды бота ---
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.effective_chat.id
-    subscribers.add(chat_id)
-    save_subscribers(subscribers)
+    chat_id = str(update.effective_chat.id)
+    if chat_id not in data["subscribers"]:
+        data["subscribers"][chat_id] = {"time": "08:00"}
+        save_data()
     await update.message.reply_text(
         "Привет! 👋 Ты подписался на ежедневные шутки за 300!\n\n"
-        "Каждое утро в 8:00 по Амстердаму я пришлю тебе анекдот.\n\n"
+        "Каждый день я пришлю тебе анекдот. По умолчанию — в 8:00.\n\n"
         "Команды:\n"
         "/joke — получить шутку прямо сейчас\n"
+        "/time — выбрать время рассылки\n"
         "/stop — отписаться\n"
     )
-    logger.info(f"Новый подписчик: {chat_id}. Всего: {len(subscribers)}")
+    logger.info(f"Новый подписчик: {chat_id}. Всего: {len(data['subscribers'])}")
 
 
 async def cmd_stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.effective_chat.id
-    subscribers.discard(chat_id)
-    save_subscribers(subscribers)
+    chat_id = str(update.effective_chat.id)
+    data["subscribers"].pop(chat_id, None)
+    save_data()
     await update.message.reply_text(
         "Ты отписался. Если передумаешь — нажми /start 😊"
     )
-    logger.info(f"Отписка: {chat_id}. Всего: {len(subscribers)}")
+    logger.info(f"Отписка: {chat_id}. Всего: {len(data['subscribers'])}")
 
 
 async def cmd_joke(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    joke = random.choice(JOKES)
-    await update.message.reply_text(f"😄 Шутка за 300:\n\n{joke}")
+    joke, idx = send_random_joke()
+    await update.message.reply_text(
+        f"😄 Шутка за 300:\n\n{joke}",
+        reply_markup=get_joke_keyboard(idx),
+    )
+
+
+async def cmd_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Показываем кнопки выбора времени рассылки."""
+    chat_id = str(update.effective_chat.id)
+    current = data["subscribers"].get(chat_id, {}).get("time", "08:00")
+    keyboard = []
+    for slot, label in TIME_SLOTS.items():
+        mark = " ✅" if slot == current else ""
+        keyboard.append(
+            [InlineKeyboardButton(f"{label}{mark}", callback_data=f"time_{slot}")]
+        )
+    await update.message.reply_text(
+        "🕐 Выбери, когда получать шутку дня:",
+        reply_markup=InlineKeyboardMarkup(keyboard),
+    )
 
 
 async def cmd_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     if ADMIN_ID and chat_id != ADMIN_ID:
-        return  # молча игнорируем, если не админ
+        return
+    # Считаем по слотам
+    time_counts = {}
+    for sub in data["subscribers"].values():
+        t = sub.get("time", "08:00")
+        time_counts[t] = time_counts.get(t, 0) + 1
+    time_info = "\n".join(
+        f"  {TIME_SLOTS.get(t, t)}: {c}" for t, c in sorted(time_counts.items())
+    )
+    # Топ-3 шутки
+    rated = []
+    for idx_str, stats in data["ratings"].items():
+        score = stats.get("up", 0) - stats.get("down", 0)
+        total = stats.get("up", 0) + stats.get("down", 0)
+        if total > 0:
+            rated.append((int(idx_str), score, total))
+    rated.sort(key=lambda x: x[1], reverse=True)
+    top_jokes = ""
+    for idx, score, total in rated[:3]:
+        if idx < len(JOKES):
+            short = JOKES[idx][:50].replace("\n", " ") + "…"
+            top_jokes += f"  👍{score} ({total} голосов) — {short}\n"
+    if not top_jokes:
+        top_jokes = "  Ещё никто не голосовал\n"
+
     await update.message.reply_text(
         f"📊 Статистика бота:\n\n"
-        f"Подписчиков: {len(subscribers)}\n"
-        f"Шуток в коллекции: {len(JOKES)}"
+        f"Подписчиков: {len(data['subscribers'])}\n"
+        f"Шуток в коллекции: {len(JOKES)}\n\n"
+        f"По времени рассылки:\n{time_info}\n\n"
+        f"Топ-3 шутки:\n{top_jokes}"
     )
 
 
+# --- Обработка нажатий на кнопки ---
+async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    cb_data = query.data
+
+    # Рейтинг шуток
+    if cb_data.startswith("rate_"):
+        parts = cb_data.split("_")  # rate_up_42 или rate_down_42
+        direction = parts[1]  # "up" или "down"
+        joke_idx = parts[2]
+        if joke_idx not in data["ratings"]:
+            data["ratings"][joke_idx] = {"up": 0, "down": 0}
+        data["ratings"][joke_idx][direction] += 1
+        save_data()
+        # Обновляем кнопки
+        await query.edit_message_reply_markup(
+            reply_markup=get_joke_keyboard(int(joke_idx))
+        )
+
+    # Выбор времени
+    elif cb_data.startswith("time_"):
+        slot = cb_data.replace("time_", "")  # "08:00", "13:00", "20:00"
+        chat_id = str(query.from_user.id)
+        if chat_id in data["subscribers"]:
+            data["subscribers"][chat_id]["time"] = slot
+            save_data()
+        await query.edit_message_text(
+            f"✅ Готово! Теперь шутка будет приходить в {TIME_SLOTS.get(slot, slot)}."
+        )
+
+
 # --- Ежедневная рассылка ---
-async def send_daily_joke(app: Application):
-    joke = random.choice(JOKES)
+async def send_daily_joke(app: Application, target_time: str):
+    """Рассылка шутки подписчикам с выбранным временем."""
+    joke, idx = send_random_joke()
     text = f"☀️ Доброе утро! Вот шутка за 300 на сегодня:\n\n{joke}"
+    if target_time == "13:00":
+        text = f"🌞 Дневная шутка за 300:\n\n{joke}"
+    elif target_time == "20:00":
+        text = f"🌙 Вечерняя шутка за 300:\n\n{joke}"
+
+    recipients = [
+        cid for cid, prefs in data["subscribers"].items()
+        if prefs.get("time", "08:00") == target_time
+    ]
     failed = []
-    for chat_id in list(subscribers):
+    for chat_id in recipients:
         try:
-            await app.bot.send_message(chat_id=chat_id, text=text)
+            await app.bot.send_message(
+                chat_id=int(chat_id),
+                text=text,
+                reply_markup=get_joke_keyboard(idx),
+            )
         except Exception as e:
             logger.warning(f"Не удалось отправить {chat_id}: {e}")
             failed.append(chat_id)
-    # Убираем тех, кто заблокировал бота
     for chat_id in failed:
-        subscribers.discard(chat_id)
+        data["subscribers"].pop(chat_id, None)
     if failed:
-        save_subscribers(subscribers)
-    logger.info(f"Рассылка завершена. Отправлено: {len(subscribers)}, ошибки: {len(failed)}")
+        save_data()
+    logger.info(
+        f"Рассылка [{target_time}] завершена. "
+        f"Отправлено: {len(recipients) - len(failed)}, ошибки: {len(failed)}"
+    )
 
 
 # --- Запуск ---
@@ -246,19 +400,22 @@ def main():
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("stop", cmd_stop))
     app.add_handler(CommandHandler("joke", cmd_joke))
+    app.add_handler(CommandHandler("time", cmd_time))
     app.add_handler(CommandHandler("stats", cmd_stats))
+    app.add_handler(CallbackQueryHandler(handle_callback))
 
-    # Планировщик: каждый день в 8:00 по Амстердаму (Europe/Amsterdam)
+    # Планировщик: рассылка в 8:00, 13:00 и 20:00 по Амстердаму
     scheduler = AsyncIOScheduler(timezone="Europe/Amsterdam")
-    scheduler.add_job(
-        send_daily_joke,
-        trigger=CronTrigger(hour=8, minute=0),
-        args=[app],
-    )
+    for slot in TIME_SLOTS:
+        hour, minute = map(int, slot.split(":"))
+        scheduler.add_job(
+            send_daily_joke,
+            trigger=CronTrigger(hour=hour, minute=minute),
+            args=[app, slot],
+        )
     scheduler.start()
-    logger.info("Бот запущен! Рассылка каждый день в 8:00 Europe/Amsterdam")
+    logger.info("Бот запущен! Рассылка в 8:00, 13:00, 20:00 Europe/Amsterdam")
 
-    # Запускаем бота
     app.run_polling(drop_pending_updates=True)
 
 
